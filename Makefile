@@ -1,8 +1,8 @@
 # Chemins vers les autres Makefiles
-SUBDIRS = src/operations/cpu src/operations/cuda src/operations/opencl src/matrices
+SUBDIRS = src/matrices src/operations/cpu src/operations/cuda src/operations/opencl
 
 # Emplacement des binaires
-BINARIES = out/operations/cpu out/operations/cuda out/operations/opencl out/matrices
+BINARIES = out/matrices out/operations/cpu out/operations/cuda out/operations/opencl
 
 # Matrices
 MATRICES = out/matrices/float/*.csv out/matrices/int/*.csv
@@ -14,6 +14,7 @@ all: build gen
 
 build:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir; done
+	
 gen:
 	@$(MAKE) -C src/matrices gen
 

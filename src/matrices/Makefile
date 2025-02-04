@@ -13,6 +13,7 @@ GEN_MATRICES_EXEC = $(BIN_DIR)/genmatrice
 .PHONY: all clean gen
 
 all: $(BIN)
+	@mkdir -p $(MATRIX_DIRS)
 
 # Compilation de matrix_utils.c en un fichier objet
 $(MATRIX_UTILS_OBJ): $(CURDIR)/matrix_utils.c
