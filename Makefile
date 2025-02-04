@@ -15,7 +15,7 @@ all: build gen
 build:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir; done
 gen:
-	@$(MAKE) -C matrices
+	@$(MAKE) -C src/matrices gen
 
 run: 
 	@echo "Usage: make run <target>"

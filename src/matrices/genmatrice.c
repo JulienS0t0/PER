@@ -76,9 +76,9 @@ int main() {
             generer_matrice_cpu_float(matrice_float, taille);
 
             // Création des noms de fichiers dynamiques
-            char filename_int[50], filename_float[50];
-            sprintf(filename_int, "int/%dx%d-number%d.csv", taille, taille, j + 1);
-            sprintf(filename_float, "float/%dx%d-number%d.csv", taille, taille, j + 1);
+            char filename_int[75], filename_float[75];
+            sprintf(filename_int, "../../out/matrices/int/%dx%d-number%d.csv", taille, taille, j + 1);
+            sprintf(filename_float, "../../out/matrices/float/%dx%d-number%d.csv", taille, taille, j + 1);
 
             // Sauvegarde des matrices
             sauvegarder_matrice_csv(filename_int, matrice_int, taille, 0);
