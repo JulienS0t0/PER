@@ -77,8 +77,8 @@ int main() {
 
             // Création des noms de fichiers dynamiques
             char filename_int[50], filename_float[50];
-            sprintf(filename_int, "matrice_int/%dx%d-number%d.csv", taille, taille, j + 1);
-            sprintf(filename_float, "matrice_float/%dx%d-number%d.csv", taille, taille, j + 1);
+            sprintf(filename_int, "int/%dx%d-number%d.csv", taille, taille, j + 1);
+            sprintf(filename_float, "float/%dx%d-number%d.csv", taille, taille, j + 1);
 
             // Sauvegarde des matrices
             sauvegarder_matrice_csv(filename_int, matrice_int, taille, 0);
