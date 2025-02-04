@@ -54,6 +54,9 @@ int main(int argc, char *argv[]) {
     int N = taille1;
     int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
 
+    int blockSize = 256;
+    int numBlocks = (N * N + blockSize - 1) / blockSize;
+
     h_result = malloc(matrixSize);
     if (!h_result) {
         cerr << "Erreur d'allocation mémoire sur l'hôte." << endl;
@@ -62,6 +65,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    auto start = high_resolution_clock::now();
+
     cudaMalloc(&d_mat1, matrixSize);
     cudaMalloc(&d_mat2, matrixSize);
     cudaMalloc(&d_result, matrixSize);
@@ -69,22 +74,19 @@ int main(int argc, char *argv[]) {
     cudaMemcpy(d_mat1, h_mat1, matrixSize, cudaMemcpyHostToDevice);
     cudaMemcpy(d_mat2, h_mat2, matrixSize, cudaMemcpyHostToDevice);
 
-    int blockSize = 256;
-    int numBlocks = (N * N + blockSize - 1) / blockSize;
-
-    auto start = high_resolution_clock::now();
     if (is_float) {
         addMatricesFloat<<<numBlocks, blockSize>>>((float*)d_mat1, (float*)d_mat2, (float*)d_result, N);
     } else {
         addMatricesInt<<<numBlocks, blockSize>>>((int*)d_mat1, (int*)d_mat2, (int*)d_result, N);
     }
     cudaDeviceSynchronize();
+
+    cudaMemcpy(h_result, d_result, matrixSize, cudaMemcpyDeviceToHost);
+
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
 
     cout << "Addition terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
-
-    cudaMemcpy(h_result, d_result, matrixSize, cudaMemcpyDeviceToHost);
 
     char nom_fichier[256];
     generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cuda", "add", is_float, N);

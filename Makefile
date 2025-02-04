@@ -10,7 +10,7 @@ MATRICES = out/matrices/float/*.csv out/matrices/int/*.csv
 # Commandes principales
 .PHONY: all build gen run clean
 
-all: build gen
+all: build # gen
 
 build:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir; done
