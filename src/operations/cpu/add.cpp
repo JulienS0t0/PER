@@ -2,40 +2,88 @@
 #include <cstdlib>
 #include <cstring>
 #include <chrono>
+#include "matrix_utils.h" // Assurez-vous que ce fichier contient les déclarations nécessaires
 
 using namespace std;
 using namespace std::chrono;
 
 template <typename T>
 void additionnerMatrices(T *matrice1, T *matrice2, T *resultat, int taille) {
-  for (int i = 0; i < taille * taille; i++) {
-    resultat[i] = matrice1[i] + matrice2[i];
-  }
+    for (int i = 0; i < taille * taille; i++) {
+        resultat[i] = matrice1[i] + matrice2[i];
+    }
 }
 
-int main(void)
-{
-  const int taille = 1000; // Exemple de taille de matrice
-  int *matrice1 = new int[taille * taille];
-  int *matrice2 = new int[taille * taille];
-  int *resultat = new int[taille * taille];
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> <fichier_matrice2.csv>" << endl;
+        return EXIT_FAILURE;
+    }
 
-  // Initialisation des matrices avec des valeurs aléatoires
-  for (int i = 0; i < taille * taille; i++) {
-    matrice1[i] = rand() % 100;
-    matrice2[i] = rand() % 100;
-  }
+    const char *fichier1 = argv[1];
+    const char *fichier2 = argv[2];
 
-  auto start = high_resolution_clock::now();
-  additionnerMatrices(matrice1, matrice2, resultat, taille);
-  auto end = high_resolution_clock::now();
+    bool is_float = type_matrice(fichier1) || type_matrice(fichier2);
 
-  auto duration = duration_cast<milliseconds>(end - start).count();
-  cout << "Temps d'addition des matrices: " << duration << " ms" << endl;
+    int taille1, taille2;
+    void *matrice1 = nullptr, *matrice2 = nullptr, *resultat = nullptr;
 
-  delete[] matrice1;
-  delete[] matrice2;
-  delete[] resultat;
+    // Charger les matrices
+    charger_matrice_csv(fichier1, &matrice1, &taille1, is_float);
+    charger_matrice_csv(fichier2, &matrice2, &taille2, is_float);
 
-  return 0;
+    // Vérifier que les tailles correspondent
+    if (taille1 != taille2) {
+        cerr << "Erreur : Les matrices doivent avoir la même taille pour être additionnées." << endl;
+        free(matrice1);
+        free(matrice2);
+        return EXIT_FAILURE;
+    }
+
+    int taille = taille1;
+
+    if (is_float) {
+        resultat = malloc(taille * taille * sizeof(matrix_float_type));
+    } else {
+        resultat = malloc(taille * taille * sizeof(matrix_int_type));
+    }
+
+    if (!resultat) {
+        cerr << "Erreur d'allocation mémoire pour la matrice résultat" << endl;
+        free(matrice1);
+        free(matrice2);
+        return EXIT_FAILURE;
+    }
+
+    // Mesurer le temps d'exécution
+    auto start = high_resolution_clock::now();
+    
+    if (is_float) {
+        additionnerMatrices((matrix_float_type*)matrice1, (matrix_float_type*)matrice2, (matrix_float_type*)resultat, taille);
+    } else {
+        additionnerMatrices((matrix_int_type*)matrice1, (matrix_int_type*)matrice2, (matrix_int_type*)resultat, taille);
+    }
+
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+
+    cout << "Addition terminée en " << duration.count() << " ms." << endl;
+
+    // Génération du nom de fichier
+    char nom_fichier[256];
+    if (is_float) {
+        generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "cpu", "add", "float", taille);
+    } else {
+        generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "cpu", "add", "int", taille);
+    }
+    // Sauvegarder la matrice résultante
+    sauvegarder_matrice_csv(nom_fichier, resultat, taille, is_float);
+
+    // Libération de la mémoire
+    free(matrice1);
+    free(matrice2);
+    free(resultat);
+
+    cout << "Résultat enregistré dans le fichier : " << nom_fichier << endl;
+    return EXIT_SUCCESS;
 }

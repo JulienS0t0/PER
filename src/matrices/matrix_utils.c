@@ -93,3 +93,27 @@ void charger_matrice_csv(const char *filename, void **matrice, int *taille, int 
     fclose(file);
     printf("Matrice chargée depuis %s\n", filename);
 }
+
+void obtenir_date_heure(char *buffer, size_t buffer_size) {
+    time_t t = time(NULL);
+    struct tm tm_info;
+    localtime_r(&t, &tm_info);
+    strftime(buffer, buffer_size, "%Y%m%d_%H%M%S", &tm_info);
+}
+
+void generer_nom_fichier_resultat(char *buffer, size_t buffer_size, const char *operationtype, const char *operation, int is_float, int taille) {
+    char date_heure[16];
+    obtenir_date_heure(date_heure, sizeof(date_heure));
+    if (is_float) {
+        snprintf(buffer, buffer_size, "%s/%s_%s_float_%d.csv", operationtype, date_heure, operation, taille);
+    } else {
+        snprintf(buffer, buffer_size, "%s/%s_%s_int_%d.csv", operationtype, date_heure, operation, taille);
+    }
+}
+
+int type_matrice(const char *filename) {
+    if (strstr(filename, "float") != NULL) {
+        return 1;
+    } else {
+        return 0;
+    }}
