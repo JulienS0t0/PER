@@ -1,82 +1,102 @@
-  #include <fstream>
-  #include <sstream>
-  #include <vector>
-  #include <iostream>
-  #include <cmath>
-  #include <chrono>
-  #include <cuda_runtime.h>
+#include <iostream>
+#include <cstdlib>
+#include <chrono>
+#include <cuda_runtime.h>
+#include "../../matrices/matrix_utils.h"
 
-  // Function to read a matrix from a CSV file
-  void readCSV(const std::string &filename, float *matrix, int N) {
-    std::ifstream file(filename);
-    std::string line;
-    int i = 0;
-    while (std::getline(file, line) && i < N * N) {
-      std::stringstream ss(line);
-      std::string value;
-      while (std::getline(ss, value, ',') && i < N * N) {
-        matrix[i++] = std::stof(value);
-      }
-    }
-  }
+using namespace std;
+using namespace std::chrono;
 
-  // CUDA kernel to add two matrices
-  __global__
-  void add(int N, float *x, float *y) {
+// CUDA Kernel pour l'addition des matrices `float`
+__global__
+void addMatricesFloat(float *mat1, float *mat2, float *result, int N) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < N * N) {
-      y[index] = x[index] + y[index];
+        result[index] = mat1[index] + mat2[index];
     }
-  }
+}
 
-  int main(int argc, char *argv[]) {
+// CUDA Kernel pour l'addition des matrices `int`
+__global__
+void addMatricesInt(int *mat1, int *mat2, int *result, int N) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < N * N) {
+        result[index] = mat1[index] + mat2[index];
+    }
+}
+
+int main(int argc, char *argv[]) {
     if (argc != 3) {
-      std::cerr << "Usage: " << argv[0] << " <path_to_first_matrix> <path_to_second_matrix>" << std::endl;
-      return 1;
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> <fichier_matrice2.csv>" << endl;
+        return EXIT_FAILURE;
     }
 
-    std::string path1 = argv[1];
-    std::string path2 = argv[2];
+    const char *fichier1 = argv[1];
+    const char *fichier2 = argv[2];
 
-    int N = 8; // Assuming N is the dimension of the matrix (N x N)
-    float *x, *y;
+    bool is_float = type_matrice(fichier1) || type_matrice(fichier2);
+    int taille1, taille2;
 
-    // Allocate Unified Memory – accessible from CPU or GPU
-    cudaMallocManaged(&x, N * N * sizeof(float));
-    cudaMallocManaged(&y, N * N * sizeof(float));
+    void *h_mat1 = nullptr, *h_mat2 = nullptr, *h_result = nullptr;
+    void *d_mat1 = nullptr, *d_mat2 = nullptr, *d_result = nullptr;
 
-    // Read matrices from CSV files
-    readCSV(path1, x, N);
-    readCSV(path2, y, N);
+    // Charger les matrices
+    charger_matrice_csv(fichier1, &h_mat1, &taille1, is_float);
+    charger_matrice_csv(fichier2, &h_mat2, &taille2, is_float);
 
-    // Measure the time of the addition
-    auto start = std::chrono::high_resolution_clock::now();
+    if (taille1 != taille2) {
+        cerr << "Erreur : Les matrices doivent avoir la même taille." << endl;
+        free(h_mat1);
+        free(h_mat2);
+        return EXIT_FAILURE;
+    }
 
-    // Run kernel on N x N elements on the GPU
+    int N = taille1;
+    int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
+
+    h_result = malloc(matrixSize);
+    if (!h_result) {
+        cerr << "Erreur d'allocation mémoire sur l'hôte." << endl;
+        free(h_mat1);
+        free(h_mat2);
+        return EXIT_FAILURE;
+    }
+
+    cudaMalloc(&d_mat1, matrixSize);
+    cudaMalloc(&d_mat2, matrixSize);
+    cudaMalloc(&d_result, matrixSize);
+
+    cudaMemcpy(d_mat1, h_mat1, matrixSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_mat2, h_mat2, matrixSize, cudaMemcpyHostToDevice);
+
     int blockSize = 256;
     int numBlocks = (N * N + blockSize - 1) / blockSize;
-    add<<<numBlocks, blockSize>>>(N, x, y);
 
-    // Wait for GPU to finish before accessing on host
+    auto start = high_resolution_clock::now();
+    if (is_float) {
+        addMatricesFloat<<<numBlocks, blockSize>>>((float*)d_mat1, (float*)d_mat2, (float*)d_result, N);
+    } else {
+        addMatricesInt<<<numBlocks, blockSize>>>((int*)d_mat1, (int*)d_mat2, (int*)d_result, N);
+    }
     cudaDeviceSynchronize();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = end - start;
+    cout << "Addition terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
 
-    // Log the duration to a file
-    std::ofstream logFile("../../res/test.log", std::ios_base::app);
-    logFile << "Addition duration: " << duration.count() << " seconds" << std::endl;
-    logFile.close();
+    cudaMemcpy(h_result, d_result, matrixSize, cudaMemcpyDeviceToHost);
 
-    // Check for errors (all values should be the sum of corresponding elements)
-    float maxError = 0.0f;
-    for (int i = 0; i < N * N; i++)
-      maxError = fmax(maxError, fabs(y[i] - (x[i] + y[i])));
-    std::cout << "Max error: " << maxError << std::endl;
+    char nom_fichier[256];
+    generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cuda", "add", is_float, N);
+    sauvegarder_matrice_csv(nom_fichier, h_result, N, is_float);
 
-    // Free memory
-    cudaFree(x);
-    cudaFree(y);
-    
-    return 0;
-  }
+    free(h_mat1);
+    free(h_mat2);
+    free(h_result);
+    cudaFree(d_mat1);
+    cudaFree(d_mat2);
+    cudaFree(d_result);
+
+    cout << "Résultat enregistré dans : " << nom_fichier << endl;
+    return EXIT_SUCCESS;
+}

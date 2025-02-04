@@ -1,81 +1,63 @@
-#include <CL/cl.h>
 #include <iostream>
-#include <vector>
 #include <fstream>
-#include <sstream>
+#include <vector>
+#include <CL/cl.hpp>
+#include "../../matrices/matrix_utils.h"
 
-// Helper function to load the kernel source code
-std::string loadKernelSource(const std::string& filename) {
-    std::ifstream file(filename);
+using namespace std;
+
+const char *KERNEL_FILE = "add.cl";
+
+string readKernelFile(const char *filename) {
+    ifstream file(filename);
     if (!file.is_open()) {
-        throw std::runtime_error("Failed to open kernel file.");
+        cerr << "Erreur : Impossible de lire le fichier du kernel OpenCL." << endl;
+        exit(EXIT_FAILURE);
     }
-    std::ostringstream oss;
-    oss << file.rdbuf();
-    return oss.str();
+    return string((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
 }
 
-int main() {
-    const int N = 1 << 20; // 1 million elements
-    std::vector<float> x(N, 1.0f); // Initialize x with 1.0
-    std::vector<float> y(N, 2.0f); // Initialize y with 2.0
-
-    // OpenCL setup
-    cl_platform_id platform;
-    cl_device_id device;
-    cl_context context;
-    cl_command_queue queue;
-    cl_program program;
-    cl_kernel kernel;
-    cl_mem d_x, d_y;
-
-    // Get platform and device
-    clGetPlatformIDs(1, &platform, nullptr);
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
-
-    // Create context and command queue
-    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
-    queue = clCreateCommandQueueWithProperties(context, device, nullptr, nullptr);
-
-    // Create buffers
-    d_x = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, N * sizeof(float), x.data(), nullptr);
-    d_y = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, N * sizeof(float), y.data(), nullptr);
-
-    // Load and build kernel
-    std::string kernelSource = loadKernelSource("add.cl");
-    const char* source = kernelSource.c_str();
-    size_t sourceSize = kernelSource.size();
-    program = clCreateProgramWithSource(context, 1, &source, &sourceSize, nullptr);
-    clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
-
-    // Create kernel
-    kernel = clCreateKernel(program, "add", nullptr);
-
-    // Set kernel arguments
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_x);
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_y);
-    clSetKernelArg(kernel, 2, sizeof(int), &N);
-
-    // Launch kernel
-    size_t globalWorkSize = 256;  // Number of threads
-    size_t localWorkSize = 64;    // Threads per block
-    clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
-
-    // Copy result back to host
-    clEnqueueReadBuffer(queue, d_y, CL_TRUE, 0, N * sizeof(float), y.data(), 0, nullptr, nullptr);
-
-    // Verify results
-    for (int i = 0; i < 10; i++) {
-        std::cout << y[i] << std::endl;
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> <fichier_matrice2.csv>" << endl;
+        return EXIT_FAILURE;
     }
 
-    // Clean up
-    clReleaseMemObject(d_x);
-    clReleaseMemObject(d_y);
-    clReleaseKernel(kernel);
-    clReleaseProgram(program);
-    clReleaseCommandQueue(queue);
-    clReleaseContext(context);
+    const char *fichier1 = argv[1];
+    const char *fichier2 = argv[2];
 
-    return 0;
+    bool is_float = type_matrice(fichier1) || type_matrice(fichier2);
+    int taille1, taille2;
+
+    void *h_mat1 = nullptr, *h_mat2 = nullptr, *h_result = nullptr;
+    charger_matrice_csv(fichier1, &h_mat1, &taille1, is_float);
+    charger_matrice_csv(fichier2, &h_mat2, &taille2, is_float);
+
+    int N = taille1;
+    int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
+
+    cl::Platform platform = cl::Platform::getDefault();
+    cl::Device device = platform.getDevices(CL_DEVICE_TYPE_GPU)[0];
+    cl::Context context(device);
+    cl::CommandQueue queue(context, device);
+
+    string kernelSource = readKernelFile(KERNEL_FILE);
+    cl::Program program(context, kernelSource);
+    program.build({device});
+
+    cl::Kernel kernel(program, is_float ? "add_matrices_float" : "add_matrices_int");
+    cl::Buffer d_mat1(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixSize, h_mat1);
+    cl::Buffer d_mat2(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixSize, h_mat2);
+    cl::Buffer d_result(context, CL_MEM_WRITE_ONLY, matrixSize);
+
+    kernel.setArg(0, d_mat1);
+    kernel.setArg(1, d_mat2);
+    kernel.setArg(2, d_result);
+    kernel.setArg(3, N);
+
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(N * N), cl::NDRange(256));
+    queue.enqueueReadBuffer(d_result, CL_TRUE, 0, matrixSize, h_result);
+
+    sauvegarder_matrice_csv("res/opencl_add.csv", h_result, N, is_float);
+    return EXIT_SUCCESS;
 }
