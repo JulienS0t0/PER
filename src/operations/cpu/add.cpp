@@ -1,38 +1,41 @@
 #include <iostream>
-#include <math.h>
+#include <cstdlib>
+#include <cstring>
+#include <chrono>
 
-// function to add the elements of two arrays
-void add(int n, float *x, float *y)
-{
-  for (int i = 0; i < n; i++)
-      y[i] = x[i] + y[i];
+using namespace std;
+using namespace std::chrono;
+
+template <typename T>
+void additionnerMatrices(T *matrice1, T *matrice2, T *resultat, int taille) {
+  for (int i = 0; i < taille * taille; i++) {
+    resultat[i] = matrice1[i] + matrice2[i];
+  }
 }
 
 int main(void)
 {
-  int N = 1<<20; // 1M elements
+  const int taille = 1000; // Exemple de taille de matrice
+  int *matrice1 = new int[taille * taille];
+  int *matrice2 = new int[taille * taille];
+  int *resultat = new int[taille * taille];
 
-  float *x = new float[N];
-  float *y = new float[N];
-
-  // initialize x and y arrays on the host
-  for (int i = 0; i < N; i++) {
-    x[i] = 1.0f;
-    y[i] = 2.0f;
+  // Initialisation des matrices avec des valeurs aléatoires
+  for (int i = 0; i < taille * taille; i++) {
+    matrice1[i] = rand() % 100;
+    matrice2[i] = rand() % 100;
   }
 
-  // Run kernel on 1M elements on the CPU
-  add(N, x, y);
+  auto start = high_resolution_clock::now();
+  additionnerMatrices(matrice1, matrice2, resultat, taille);
+  auto end = high_resolution_clock::now();
 
-  // Check for errors (all values should be 3.0f)
-  float maxError = 0.0f;
-  for (int i = 0; i < N; i++)
-    maxError = fmax(maxError, fabs(y[i]-3.0f));
-  std::cout << "Max error: " << maxError << std::endl;
+  auto duration = duration_cast<milliseconds>(end - start).count();
+  cout << "Temps d'addition des matrices: " << duration << " ms" << endl;
 
-  // Free memory
-  delete [] x;
-  delete [] y;
+  delete[] matrice1;
+  delete[] matrice2;
+  delete[] resultat;
 
   return 0;
 }
