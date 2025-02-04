@@ -4,8 +4,9 @@
 #include <string.h>
 #include <sys/stat.h>  // Pour mkdir
 #include <sys/types.h>
+#include <sys/time.h>
 
-#define MAX_N 2048  // Taille maximale de la matrice carrée
+#define MAX_N 16384  // Taille maximale de la matrice carrée
 #define MIN_VAL -100
 #define MAX_VAL 100
 

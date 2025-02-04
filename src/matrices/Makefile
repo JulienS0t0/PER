@@ -1,4 +1,4 @@
-CC = gcc
+CC = g++
 CFLAGS = -O2 -Wall
 LDFLAGS =  # Potentiels flags de liaison
 

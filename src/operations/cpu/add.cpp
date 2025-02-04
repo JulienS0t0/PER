@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <chrono>
-#include "matrix_utils.h" // Assurez-vous que ce fichier contient les déclarations nécessaires
+#include "../../matrices/matrix_utils.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -71,11 +71,7 @@ int main(int argc, char *argv[]) {
 
     // Génération du nom de fichier
     char nom_fichier[256];
-    if (is_float) {
-        generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "cpu", "add", "float", taille);
-    } else {
-        generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "cpu", "add", "int", taille);
-    }
+    generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cpu", "add", is_float, taille);
     // Sauvegarder la matrice résultante
     sauvegarder_matrice_csv(nom_fichier, resultat, taille, is_float);
 

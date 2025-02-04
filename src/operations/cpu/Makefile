@@ -1,17 +1,21 @@
 CC = g++
 CFLAGS = -O2 -Wall
+LDFLAGS =  # Potentiels flags de liaison
 
 SRC = $(wildcard $(CURDIR)/*.cpp)
 BIN_DIR = $(CURDIR)/../../../out/operations/cpu
 BIN = $(patsubst $(CURDIR)/%.cpp, $(BIN_DIR)/%, $(SRC))
 
+MATRIX_UTILS_OBJ = $(CURDIR)/../../../out/matrices/matrix_utils.o
+
 .PHONY: all clean
 
 all: $(BIN)
 
-$(BIN_DIR)/%: $(CURDIR)/%.cpp
+# Compilation des autres fichiers en exécutables, en liant matrix_utils.o
+$(BIN_DIR)/%: $(CURDIR)/%.cpp $(MATRIX_UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -rf $(BIN_DIR)
