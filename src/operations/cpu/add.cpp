@@ -69,17 +69,17 @@ int main(int argc, char *argv[]) {
 
     cout << "Addition terminée en " << duration.count() << " ms." << endl;
 
-    // Génération du nom de fichier
-    char nom_fichier[256];
-    generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cpu", "add", is_float, taille);
-    // Sauvegarder la matrice résultante
-    sauvegarder_matrice_csv(nom_fichier, resultat, taille, is_float);
+    // // Génération du nom de fichier
+    // char nom_fichier[256];
+    // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cpu", "add", is_float, taille);
+    // // Sauvegarder la matrice résultante
+    // sauvegarder_matrice_csv(nom_fichier, resultat, taille, is_float);
+    // cout << "Résultat enregistré dans le fichier : " << nom_fichier << endl;
 
     // Libération de la mémoire
     free(matrice1);
     free(matrice2);
     free(resultat);
 
-    cout << "Résultat enregistré dans le fichier : " << nom_fichier << endl;
     return EXIT_SUCCESS;
 }

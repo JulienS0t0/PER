@@ -12,6 +12,15 @@ fi
 OPERATION=$1
 MATRIX_DIR="out/matrices"
 OPERATIONS_DIR="out/operations"
+RESULTS_DIR="res"
+CUDA_RESULTS_DIR="$RESULTS_DIR/cuda"
+OPENCL_RESULTS_DIR="$RESULTS_DIR/opencl"
+
+mkdir -p "$CUDA_RESULTS_DIR"
+mkdir -p "$OPENCL_RESULTS_DIR"
+
+# Obtenir la date et l'heure actuelles
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Trouver tous les types de matrices (int, float, etc.)
 for TYPE in $(ls "$MATRIX_DIR"); do
@@ -26,13 +35,23 @@ for TYPE in $(ls "$MATRIX_DIR"); do
             continue
         fi
 
+        # Extraire la taille de la matrice depuis le nom du fichier
+        MATRIX_SIZE=$(basename "$FILE1" | cut -d'-' -f1)
+
         # Exécuter chaque implémentation disponible de l'opération
         for IMPL in cpu cuda opencl; do
             EXECUTABLE="$OPERATIONS_DIR/$IMPL/$OPERATION"
             
             if [ -x "$EXECUTABLE" ]; then
                 echo "Running $EXECUTABLE with $FILE1 and $FILE2"
-                "$EXECUTABLE" "$FILE1" "$FILE2"
+                if [ "$IMPL" == "cuda" ]; then
+                    nvprof --log-file "$CUDA_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log" "$EXECUTABLE" "$FILE1" "$FILE2"
+                elif [ "$IMPL" == "opencl" ]; then
+                    nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2"
+                else
+                    # "$EXECUTABLE" "$FILE1" "$FILE2" # Run without monitoring
+                    /usr/bin/time -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "res/cpu/${TIMESTAMP}${OPERATION}${TYPE}_${MATRIX_SIZE}.log"
+                fi
             else
                 echo "Executable not found: $EXECUTABLE"
             fi

@@ -144,9 +144,9 @@ int main(int argc, char *argv[]) {
     }
 
     // 7. Save and Cleanup
-    char nom_fichier[256];
-    generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/opencl", "add", is_float, N);
-    sauvegarder_matrice_csv(nom_fichier, h_result, N, is_float);
+    // char nom_fichier[256];
+    // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/opencl", "add", is_float, N);
+    // sauvegarder_matrice_csv(nom_fichier, h_result, N, is_float);
 
     // Cleanup OpenCL Resources
     clReleaseMemObject(d_mat1);
