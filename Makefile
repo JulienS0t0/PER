@@ -8,7 +8,7 @@ BINARIES = out/matrices out/operations/cpu out/operations/cuda out/operations/op
 MATRICES = out/matrices/float/*.csv out/matrices/int/*.csv
 
 # Commandes principales
-.PHONY: all build gen run clean
+.PHONY: all build gen run clean clean-res
 
 all: build # gen
 
@@ -19,20 +19,11 @@ gen:
 	@$(MAKE) -C src/matrices gen
 
 run: 
-	@echo "Usage: make run <target>"
-	@echo "Example: make run add | make run all"
-
-# TODO : implémenter un moyen de lancer tous les benchmarks 
-# run-all: run-add
-
-# run-add:
-#     @echo "Running add for CPU..."
-#     @./out/operations/cpu/add > res/cpu/add.csv
-#     @echo "Running add for CUDA..."
-#     @./out/operations/cuda/add > res/cuda/add.csv
-#     @echo "Running add for OpenCL..."
-#     @./out/operations/opencl/add > res/opencl/add.csv
+	@./src/operations/scripts/run.sh $(word 2, $(MAKECMDGOALS))
 
 clean:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
 	rm -rf out/operations/* out/matrices/*
+
+clean-res:
+	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean-res; done

@@ -29,21 +29,30 @@ make gen
 ```
 
 # Run
-## CPU
+## Scripts & Makefiles
+Depuis le dossier racine du projet
+```
+make run add
+```
+Remplacer add par toute autre opération
+
+## Manuellement
+
+### CPU
 
 Exemple :
 ```
 ./out/operations/cuda/add ./out/matrices/int/4096x4096-number1.csv ./out/matrices/int/4096x4096-number2.csv
 ```
 
-## Cuda
+### Cuda
 
 Exemple :
 ```
 nvprof ./out/operations/cuda/add ./out/matrices/int/4096x4096-number1.csv ./out/matrices/int/4096x4096-number2.csv
 ```
 
-## OpenCL
+### OpenCL
 
 Exemple :
 ```

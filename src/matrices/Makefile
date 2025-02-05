@@ -32,3 +32,7 @@ gen: all $(MATRIX_DIRS)
 
 clean:
 	rm -rf $(BIN_DIR)
+
+# Here so that it does not complain 
+clean-res:
+	

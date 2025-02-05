@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
     // 5. Execute Kernel
     size_t globalWorkSize = N * N;
-    size_t localWorkSize = 256;
+    size_t localWorkSize = (globalWorkSize < 256) ? globalWorkSize : 256;
 
     err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
     if (err != CL_SUCCESS) {
