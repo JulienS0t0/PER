@@ -8,6 +8,10 @@ pkgs.mkShell {
     pkgs.cudatoolkit
     pkgs.cudatoolkit.lib
     pkgs.cudaPackages.cuda_cudart
+
+    # utils
+    pkgs.cudaPackages.cuda_nvprof
+    # pkgs.cudaPackages.nsight_systems # Ne build pas ;-;
   ];
 
   shellHook = ''

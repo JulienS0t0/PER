@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
     auto start = high_resolution_clock::now();
     
     if (is_float) {
-        traceMatrice((matrix_float_type*)matrice1, (matrix_float_type*)resultat, taille);
+        traceMatrice((matrix_float_type*)matrice1, (matrix_float_type*)resultat, taille1);
     } else {
-        traceMatrice((matrix_float_type*)matrice1, (matrix_int_type*)resultat, taille);
+        traceMatrice((matrix_int_type*)matrice1, (matrix_int_type*)resultat, taille1);
     }
 
     // auto stop = high_resolution_clock::now();
