@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     if (is_float) {
         traceMatrice((matrix_float_type*)matrice1, (matrix_float_type*)resultat, taille);
     } else {
-        traceMatrice((matrix_float_type*)matrice1, (matrix_int_type*)resultat, taille);
+        traceMatrice((matrix_int_type*)matrice1, (matrix_int_type*)resultat, taille);
     }
 
     // auto stop = high_resolution_clock::now();
