@@ -15,7 +15,6 @@ all: $(BIN)
 
 $(BIN_DIR)/%: $(CURDIR)/%.cpp $(MATRIX_UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
-	@mkdir -p $(RES_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:

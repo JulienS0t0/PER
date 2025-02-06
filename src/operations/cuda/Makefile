@@ -16,7 +16,6 @@ all: $(BIN)
 
 $(BIN_DIR)/%: $(CURDIR)/%.cu $(MATRIX_UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
-	@mkdir -p $(RES_DIR)
 	$(NVCC) $(NVFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:

@@ -26,4 +26,5 @@ clean:
 	rm -rf out/operations/* out/matrices/*
 
 clean-res:
-	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean-res; done
+	rm -rf res/*
+	# @for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean-res; done

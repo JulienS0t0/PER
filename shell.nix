@@ -10,8 +10,7 @@ pkgs.mkShell {
     pkgs.cudaPackages.cuda_cudart
 
     # utils
-    pkgs.cudaPackages.cuda_nvprof
-    # pkgs.cudaPackages.nsight_systems # Ne build pas ;-;
+    pkgs.cudaPackages.cuda_nvprof # deprecated ? sur les GPU récents
   ];
 
   shellHook = ''

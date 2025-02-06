@@ -16,7 +16,6 @@ all: $(BIN)
 # Compilation des autres fichiers en exécutables, en liant matrix_utils.o
 $(BIN_DIR)/%: $(CURDIR)/%.cpp $(MATRIX_UTILS_OBJ)
 	@mkdir -p $(BIN_DIR)
-	@mkdir -p $(RES_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:

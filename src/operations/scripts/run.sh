@@ -9,18 +9,23 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+# Obtenir la date et l'heure actuelles
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
 OPERATION=$1
 MATRIX_DIR="out/matrices"
 OPERATIONS_DIR="out/operations"
-RESULTS_DIR="res"
-CUDA_RESULTS_DIR="$RESULTS_DIR/cuda"
-OPENCL_RESULTS_DIR="$RESULTS_DIR/opencl"
+RESULTS_DIR="res/${TIMESTAMP}_${OPERATION}"
+CUDA_RESULTS_DIR="${RESULTS_DIR}/cuda"
+OPENCL_RESULTS_DIR="${RESULTS_DIR}/opencl"
+CPU_RESULTS_DIR="${RESULTS_DIR}/cpu"
 
-mkdir -p "$CUDA_RESULTS_DIR"
-mkdir -p "$OPENCL_RESULTS_DIR"
+# Détection du chemin de `time`
+TIME_CMD=$(command -v time || echo "/usr/bin/time")
 
-# Obtenir la date et l'heure actuelles
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+mkdir -p "${CUDA_RESULTS_DIR}"
+mkdir -p "${OPENCL_RESULTS_DIR}"
+mkdir -p "${CPU_RESULTS_DIR}"
 
 # Trouver tous les types de matrices (int, float, etc.)
 for TYPE in $(ls "$MATRIX_DIR"); do
@@ -50,7 +55,7 @@ for TYPE in $(ls "$MATRIX_DIR"); do
                     nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2"
                 else
                     # "$EXECUTABLE" "$FILE1" "$FILE2" # Run without monitoring
-                    /usr/bin/time -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "res/cpu/${TIMESTAMP}${OPERATION}${TYPE}_${MATRIX_SIZE}.log"
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 fi
             else
                 echo "Executable not found: $EXECUTABLE"
