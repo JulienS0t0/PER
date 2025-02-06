@@ -4,4 +4,7 @@ out/*
 res
 res/*
 
+.direnv
+.direnv/*
+
 report*

@@ -8,12 +8,12 @@ using namespace std;
 using namespace std::chrono;
 
 template <typename T>
-void traceMatrice(T *matrice1, T *resultat, int taille) {
-    T trace = 0;
+void transpositionMatrice(T *matrice1, T *resultat, int taille) {
     for (int i = 0; i < taille; i++) {
-        trace += matrice1[i * taille + i];
+        for (int j = 0; j < taille; j++) {
+            resultat[j * taille + i] = matrice1[i * taille + j];
+        }
     }
-    *resultat = trace;
 }
 
 int main(int argc, char *argv[]) {
@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
     auto start = high_resolution_clock::now();
     
     if (is_float) {
-        traceMatrice((matrix_float_type*)matrice1, (matrix_float_type*)resultat, taille1);
+        transpositionMatrice((matrix_float_type*)matrice1, (matrix_float_type*)resultat, taille1);
     } else {
-        traceMatrice((matrix_int_type*)matrice1, (matrix_int_type*)resultat, taille1);
+        transpositionMatrice((matrix_int_type*)matrice1, (matrix_int_type*)resultat, taille1);
     }
 
     // auto stop = high_resolution_clock::now();
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     // // Génération du nom de fichier
     // char nom_fichier[256];
-    // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cpu", "trace", is_float, taille);
+    // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cpu", "transposition", is_float, taille);
     // // Sauvegarder la matrice résultante
     // sauvegarder_matrice_csv(nom_fichier, resultat, taille, is_float);
     // cout << "Résultat enregistré dans le fichier : " << nom_fichier << endl;
