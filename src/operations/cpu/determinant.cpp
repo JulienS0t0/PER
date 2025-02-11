@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <chrono>
+#include <cmath>
+#include <vector>
 #include "../../matrices/matrix_utils.h"
 
 using namespace std;
