@@ -1,8 +1,8 @@
 # Chemins vers les autres Makefiles
-SUBDIRS = src/matrices src/operations/cpu src/operations/cuda src/operations/opencl
+SUBDIRS = src/matrices src/operations/cpu src/operations/cuda src/operations/opencl src/operations/cpu_opti
 
 # Emplacement des binaires
-BINARIES = out/matrices out/operations/cpu out/operations/cuda out/operations/opencl
+BINARIES = out/matrices out/operations/cpu out/operations/cuda out/operations/opencl out/operations/cpu_opti
 
 # Matrices
 MATRICES = out/matrices/float/*.csv out/matrices/int/*.csv

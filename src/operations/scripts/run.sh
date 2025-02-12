@@ -19,6 +19,8 @@ RESULTS_DIR="res/${TIMESTAMP}_${OPERATION}"
 CUDA_RESULTS_DIR="${RESULTS_DIR}/cuda"
 OPENCL_RESULTS_DIR="${RESULTS_DIR}/opencl"
 CPU_RESULTS_DIR="${RESULTS_DIR}/cpu"
+CPU_OPTI_O2_RESULTS_DIR="${RESULTS_DIR}/cpu_opti_O2"
+CPU_OPTI_O3_RESULTS_DIR="${RESULTS_DIR}/cpu_opti_O3"
 
 # Détection du chemin de `time`
 TIME_CMD=$(command -v time || echo "/usr/bin/time")
@@ -26,6 +28,8 @@ TIME_CMD=$(command -v time || echo "/usr/bin/time")
 mkdir -p "${CUDA_RESULTS_DIR}"
 mkdir -p "${OPENCL_RESULTS_DIR}"
 mkdir -p "${CPU_RESULTS_DIR}"
+mkdir -p "${CPU_OPTI_O2_RESULTS_DIR}"
+mkdir -p "${CPU_OPTI_O3_RESULTS_DIR}"
 
 # Trouver tous les types de matrices (int, float, etc.)
 for TYPE in $(ls "$MATRIX_DIR"); do
@@ -44,7 +48,8 @@ for TYPE in $(ls "$MATRIX_DIR"); do
         MATRIX_SIZE=$(basename "$FILE1" | cut -d'-' -f1)
 
         # Exécuter chaque implémentation disponible de l'opération
-        for IMPL in cpu cuda opencl; do
+        # for IMPL in cpu cuda opencl; do
+        for IMPL in cpu cpu_opti_O2 cpu_opti_O3 cuda opencl; do
             EXECUTABLE="$OPERATIONS_DIR/$IMPL/$OPERATION"
             
             if [ -x "$EXECUTABLE" ]; then
@@ -53,6 +58,10 @@ for TYPE in $(ls "$MATRIX_DIR"); do
                     nvprof --log-file "$CUDA_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log" "$EXECUTABLE" "$FILE1" "$FILE2"
                 elif [ "$IMPL" == "opencl" ]; then
                     nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2"
+                elif [ "$IMPL" == "cpu_opti_O2" ]; then
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_OPTI_O2_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                elif [ "$IMPL" == "cpu_opti_O3" ]; then
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_OPTI_O3_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 else
                     # "$EXECUTABLE" "$FILE1" "$FILE2" # Run without monitoring
                     $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
