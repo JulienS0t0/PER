@@ -106,5 +106,6 @@ int main(int argc, char *argv[]) {
     free(data1);
     free(data2);
     free(resultat);
+
     return EXIT_SUCCESS;
 }
