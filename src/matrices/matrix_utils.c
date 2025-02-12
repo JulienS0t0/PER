@@ -111,8 +111,8 @@ void generer_nom_fichier_resultat(char *buffer, size_t buffer_size, const char *
     }
 }
 
-int type_matrice(const char *filename) {
-    if (strstr(filename, "float") != NULL) {
+int type_matrice(const char *path_name) {
+    if (strstr(path_name, "float") != NULL) {
         return 1;
     } else {
         return 0;
