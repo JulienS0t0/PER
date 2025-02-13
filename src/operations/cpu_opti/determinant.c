@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) {
 
     charger_matrice_csv(argv[1], &data, &taille, is_float);
 
-    if (taille > BLOCK_SIZE) {
-        printf("Erreur : Taille de matrice trop grande (max %d)\n", BLOCK_SIZE);
+    if (taille > MAX_N) {
+        printf("Erreur : Taille de matrice trop grande (max %d)\n", MAX_N);
         return EXIT_FAILURE;
     }
 
