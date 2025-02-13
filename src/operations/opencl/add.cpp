@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#define CL_TARGET_OPENCL_VERSION 200
 #include <CL/cl.h>  // OpenCL C API
 #include <unistd.h>
 #include "../../matrices/matrix_utils.h"
@@ -72,7 +73,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Create a command queue
-    queue = clCreateCommandQueue(context, device, 0, &err);
+    cl_queue_properties properties[] = {0}; // Propriétés vides
+    queue = clCreateCommandQueueWithProperties(context, device, properties, &err);
     if (!queue) {
         cerr << "Erreur : Impossible de créer la file de commandes OpenCL." << endl;
         return EXIT_FAILURE;
@@ -121,6 +123,7 @@ int main(int argc, char *argv[]) {
     }
 
     // 4. Set Kernel Arguments
+    clock_t start = clock();
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_mat1);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_mat2);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_result);
@@ -131,6 +134,8 @@ int main(int argc, char *argv[]) {
     size_t localWorkSize = (globalWorkSize < 256) ? globalWorkSize : 256;
 
     err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
+    clock_t end = clock();
+
     if (err != CL_SUCCESS) {
         cerr << "Erreur : Échec de l'exécution du kernel OpenCL." << endl;
         return EXIT_FAILURE;
@@ -144,6 +149,8 @@ int main(int argc, char *argv[]) {
     }
 
     // 7. Save and Cleanup
+    double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("Addition terminée en %.2f ms.\n", temps_execution);
     // char nom_fichier[256];
     // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/opencl", "add", is_float, N);
     // sauvegarder_matrice_csv(nom_fichier, h_result, N, is_float);

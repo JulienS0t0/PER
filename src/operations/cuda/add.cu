@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
 
-    // cout << "Addition terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
+    cout << "Addition terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
 
     // char nom_fichier[256];
     // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cuda", "add", is_float, N);

@@ -98,10 +98,10 @@ int main(int argc, char *argv[]) {
     printf("Addition terminée en %.2f ms.\n", temps_execution);
 
     // Sauvegarder le résultat si nécessaire
-    char nom_fichier_resultat[256];
-    generer_nom_fichier_resultat(nom_fichier_resultat, sizeof(nom_fichier_resultat),
-                                "cpu", "addition", is_float1, taille1);
-    sauvegarder_matrice_csv(nom_fichier_resultat, resultat, taille1, is_float1);
+    // char nom_fichier_resultat[256];
+    // generer_nom_fichier_resultat(nom_fichier_resultat, sizeof(nom_fichier_resultat),
+    //                             "cpu", "addition", is_float1, taille1);
+    // sauvegarder_matrice_csv(nom_fichier_resultat, resultat, taille1, is_float1);
 
     free(data1);
     free(data2);

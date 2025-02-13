@@ -55,16 +55,18 @@ for TYPE in $(ls "$MATRIX_DIR"); do
             if [ -x "$EXECUTABLE" ]; then
                 echo "Running $EXECUTABLE with $FILE1 and $FILE2"
                 if [ "$IMPL" == "cuda" ]; then
-                    nvprof --log-file "$CUDA_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log" "$EXECUTABLE" "$FILE1" "$FILE2"
+                    # nsys profile -o "$CUDA_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CUDA_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CUDA_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 elif [ "$IMPL" == "opencl" ]; then
-                    nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2"
+                    # nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2" &> "${OPENCL_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${OPENCL_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 elif [ "$IMPL" == "cpu_opti_O2" ]; then
-                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_OPTI_O2_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CPU_OPTI_O2_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 elif [ "$IMPL" == "cpu_opti_O3" ]; then
-                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_OPTI_O3_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CPU_OPTI_O3_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 else
                     # "$EXECUTABLE" "$FILE1" "$FILE2" # Run without monitoring
-                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" 2> "${CPU_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CPU_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 fi
             else
                 echo "Executable not found: $EXECUTABLE"

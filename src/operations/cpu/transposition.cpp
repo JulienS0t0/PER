@@ -53,10 +53,10 @@ int main(int argc, char *argv[]) {
         transpositionMatrice((matrix_int_type*)matrice1, (matrix_int_type*)resultat, taille1);
     }
 
-    // auto stop = high_resolution_clock::now();
-    // auto duration = duration_cast<milliseconds>(stop - start);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
 
-    // cout << "Transposition terminée en " << duration.count() << " ms." << endl;
+    cout << "Transposition terminée en " << duration.count() << " ms." << endl;
 
     // // Génération du nom de fichier
     // char nom_fichier[256];

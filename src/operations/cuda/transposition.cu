@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
 
-    // cout << "Trace terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
+    cout << "Transposition terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
     // cout << "Résultat de la trace : " << (is_float ? *(float*)h_result : *(int*)h_result) << endl;
 
     free(h_mat);

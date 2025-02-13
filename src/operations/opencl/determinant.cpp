@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#define CL_TARGET_OPENCL_VERSION 200
 #include <CL/cl.h>
 #include "../../matrices/matrix_utils.h"
 
@@ -45,7 +46,8 @@ int main(int argc, char *argv[]) {
     err = clGetPlatformIDs(1, &platform, nullptr);
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &err);
-    queue = clCreateCommandQueue(context, device, 0, &err);
+    cl_queue_properties properties[] = {0}; // Propriétés vides
+    queue = clCreateCommandQueueWithProperties(context, device, properties, &err);
 
     // 2. Compilation du kernel
     string kernelSource = readKernelFile(KERNEL_FILE);
@@ -62,6 +64,7 @@ int main(int argc, char *argv[]) {
     cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, is_float ? sizeof(float) : sizeof(int), nullptr, &err);
 
     // 4. Passage des arguments
+    clock_t start = clock();
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_mat);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_result);
     clSetKernelArg(kernel, 2, sizeof(int), &N);
@@ -71,8 +74,12 @@ int main(int argc, char *argv[]) {
     size_t localWorkSize = (globalWorkSize < 256) ? globalWorkSize : 256;
 
     err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
+    clock_t end = clock();
 
     err = clEnqueueReadBuffer(queue, d_result, CL_TRUE, 0, is_float ? sizeof(float) : sizeof(int), h_result, 0, nullptr, nullptr);
+
+    double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("Déterminant terminé en %.2f ms.\n", temps_execution);
 
     // Nettoyage
     clReleaseMemObject(d_mat);

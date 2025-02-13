@@ -98,22 +98,22 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    multiplier_matrices_grandes(data1, data2, resultat, taille1, is_float1);
-
-    /*
-
     clock_t start = clock();
+    multiplier_matrices_grandes(data1, data2, resultat, taille1, is_float1);
     clock_t end = clock();
-    
+
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("Multiplication terminée en %.2f ms.\n", temps_execution);
 
+    /*
+    
     // Sauvegarder le résultat si nécessaire
     char nom_fichier_resultat[256];
     generer_nom_fichier_resultat(nom_fichier_resultat, sizeof(nom_fichier_resultat),
                                  "cpu", "multiplication", is_float1, taille1);
     sauvegarder_matrice_csv(nom_fichier_resultat, resultat, taille1, is_float1);
     */
+    
     free(data1);
     free(data2);
     free(resultat);
