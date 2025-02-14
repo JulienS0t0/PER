@@ -9,6 +9,9 @@ pkgs.mkShell {
     pkgs.cudatoolkit.lib
     pkgs.cudaPackages.cuda_cudart
 
+    pkgs.python3Packages.pandas
+    pkgs.python3Packages.matplotlib
+
     # utils
     pkgs.cudaPackages.cuda_nvprof # deprecated ? sur les GPU récents
   ];

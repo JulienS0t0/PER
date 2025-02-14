@@ -72,6 +72,9 @@ def plot_execution_time(df):
     df["Matrix Size"] = df["Matrix Size"].apply(lambda x: int(x.split('x')[0]))
     df.sort_values(by="Matrix Size", inplace=True)
     
+    # Créer le dossier si il n'existe pas déjà
+    os.makedirs('./res/graphs', exist_ok=True)
+
     for timestamp in df["Timestamp"].unique():
         subset_timestamp = df[df["Timestamp"] == timestamp]
         for operation in subset_timestamp["Operation"].unique():
