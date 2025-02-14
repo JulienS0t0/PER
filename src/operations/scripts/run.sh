@@ -15,7 +15,7 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 OPERATION=$1
 MATRIX_DIR="out/matrices"
 OPERATIONS_DIR="out/operations"
-RESULTS_DIR="res/${TIMESTAMP}_${OPERATION}"
+RESULTS_DIR="res/raw/${TIMESTAMP}_${OPERATION}"
 CUDA_RESULTS_DIR="${RESULTS_DIR}/cuda"
 OPENCL_RESULTS_DIR="${RESULTS_DIR}/opencl"
 CPU_RESULTS_DIR="${RESULTS_DIR}/cpu"
@@ -55,11 +55,11 @@ for TYPE in $(ls "$MATRIX_DIR"); do
             if [ -x "$EXECUTABLE" ]; then
                 echo "Running $EXECUTABLE with $FILE1 and $FILE2"
                 if [ "$IMPL" == "cuda" ]; then
-                    # nsys profile -o "$CUDA_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CUDA_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
-                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CUDA_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    nsys profile -o "$CUDA_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CUDA_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    #$TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CUDA_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 elif [ "$IMPL" == "opencl" ]; then
-                    # nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2" &> "${OPENCL_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
-                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${OPENCL_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    nsys profile -o "$OPENCL_RESULTS_DIR/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}" "$EXECUTABLE" "$FILE1" "$FILE2" &> "${OPENCL_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
+                    #$TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${OPENCL_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 elif [ "$IMPL" == "cpu_opti_O2" ]; then
                     $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" &> "${CPU_OPTI_O2_RESULTS_DIR}/${TIMESTAMP}_${OPERATION}_${TYPE}_${MATRIX_SIZE}.log"
                 elif [ "$IMPL" == "cpu_opti_O3" ]; then
