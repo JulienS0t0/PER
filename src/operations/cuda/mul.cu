@@ -37,7 +37,6 @@ void multiplyMatricesInt(int *mat1, int *mat2, int *result, int N) {
     }
 }
 
-
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> <fichier_matrice2.csv> [chemin_stockage]" << endl;
@@ -57,7 +56,7 @@ int main(int argc, char *argv[]) {
     // Charger les matrices
     charger_matrice_csv(fichier1, &h_mat1, &taille1, is_float);
     charger_matrice_csv(fichier2, &h_mat2, &taille2, is_float);
-
+    
     if (taille1 != taille2) {
         cerr << "Erreur : Les matrices doivent avoir la même taille." << endl;
         free(h_mat1);
@@ -66,10 +65,7 @@ int main(int argc, char *argv[]) {
     }
 
     int N = taille1;
-    int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
-
-    int blockSize = 256;
-    int numBlocks = (N * N + blockSize - 1) / blockSize;
+    size_t matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
 
     h_result = malloc(matrixSize);
     if (!h_result) {
@@ -88,10 +84,14 @@ int main(int argc, char *argv[]) {
     cudaMemcpy(d_mat1, h_mat1, matrixSize, cudaMemcpyHostToDevice);
     cudaMemcpy(d_mat2, h_mat2, matrixSize, cudaMemcpyHostToDevice);
 
+    dim3 threadsPerBlock(16, 16);
+    dim3 numBlocks((N + threadsPerBlock.x - 1) / threadsPerBlock.x, 
+                    (N + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
     if (is_float) {
-        multiplyMatricesFloat<<<numBlocks, blockSize>>>((float*)d_mat1, (float*)d_mat2, (float*)d_result, N);
+        multiplyMatricesFloat<<<numBlocks, threadsPerBlock>>>((float*)d_mat1, (float*)d_mat2, (float*)d_result, N);
     } else {
-        multiplyMatricesInt<<<numBlocks, blockSize>>>((int*)d_mat1, (int*)d_mat2, (int*)d_result, N);
+        multiplyMatricesInt<<<numBlocks, threadsPerBlock>>>((int*)d_mat1, (int*)d_mat2, (int*)d_result, N);
     }
     cudaDeviceSynchronize();
 
@@ -114,7 +114,6 @@ int main(int argc, char *argv[]) {
     cudaFree(d_mat1);
     cudaFree(d_mat2);
     cudaFree(d_result);
-
 
     return EXIT_SUCCESS;
 }
