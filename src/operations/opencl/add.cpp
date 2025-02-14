@@ -20,13 +20,14 @@ string readKernelFile(const char *filename) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> <fichier_matrice2.csv>" << endl;
+    if (argc < 3) {
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> <fichier_matrice2.csv> [chemin_stockage]" << endl;
         return EXIT_FAILURE;
     }
 
     const char *fichier1 = argv[1];
     const char *fichier2 = argv[2];
+    const char *chemin_stockage = (argc > 3) ? argv[3] : nullptr;
 
     bool is_float = type_matrice(fichier1) || type_matrice(fichier2);
     int taille1, taille2;
@@ -151,9 +152,12 @@ int main(int argc, char *argv[]) {
     // 7. Save and Cleanup
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("Addition terminée en %.2f ms.\n", temps_execution);
-    // char nom_fichier[256];
-    // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/opencl", "add", is_float, N);
-    // sauvegarder_matrice_csv(nom_fichier, h_result, N, is_float);
+    
+    // Sauvegarde si un chemin de stockage est fourni
+    if (chemin_stockage) {
+        sauvegarder_matrice_csv(chemin_stockage, h_result, N, is_float);
+        cout << "Résultat enregistré dans le fichier : " << chemin_stockage << endl;
+    }
 
     // Cleanup OpenCL Resources
     clReleaseMemObject(d_mat1);

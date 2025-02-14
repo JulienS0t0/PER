@@ -8,7 +8,7 @@ BINARIES = out/matrices out/operations/cpu out/operations/cuda out/operations/op
 MATRICES = out/matrices/float/*.csv out/matrices/int/*.csv
 
 # Commandes principales
-.PHONY: all build gen run clean clean-res
+.PHONY: all build gen run run-save clean clean-res
 
 all: build # gen
 
@@ -20,6 +20,9 @@ gen:
 
 run: 
 	@./src/operations/scripts/run.sh $(word 2, $(MAKECMDGOALS))
+
+run-save:
+	@./src/operations/scripts/run.sh $(word 2, $(MAKECMDGOALS)) save
 
 clean:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
