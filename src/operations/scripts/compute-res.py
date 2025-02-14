@@ -3,19 +3,18 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def parse_log_file(filepath):
+def parse_log_file(filepath, timestamp, operation, execution_type):
     """Parse a log file to extract execution time, matrix size, operation type, and execution type."""
     with open(filepath, 'r') as file:
         content = file.readlines()
     
     filename = os.path.basename(filepath)
-    match = re.match(r'(\d{8}_\d{6})_(\w+)_([a-zA-Z]+)_([\dx]+)\.log', filename)
+    match = re.match(r'(\d+x\d+)_([a-zA-Z]+)\.log', filename)
     
     if not match:
         return None
     
-    timestamp, operation, value_type, matrix_size = match.groups()
-    execution_type = filepath.split(os.sep)[-3]  # Adjusted to match new directory structure
+    matrix_size, value_type = match.groups()
     execution_time = None
     
     for line in content:
@@ -25,7 +24,7 @@ def parse_log_file(filepath):
                 minutes, seconds = map(float, time_match.groups())
                 execution_time = minutes * 60 + seconds
                 break
-        elif "Addition terminée en" in line:
+        elif "terminé" in line or "terminée" in line:
             time_match = re.search(r'([0-9]+\.?[0-9]*) ms', line)
             if time_match:
                 execution_time = float(time_match.group(1)) / 1000  # Convert ms to seconds
@@ -47,13 +46,23 @@ def process_logs(log_dir):
     """Walk through the log directory, parse files, and collect data."""
     data = []
     
-    for root, _, files in os.walk(log_dir):
-        for file in files:
-            if file.endswith(".log"):
-                filepath = os.path.join(root, file)
-                parsed_data = parse_log_file(filepath)
-                if parsed_data:
-                    data.append(parsed_data)
+    for root, dirs, _ in os.walk(log_dir):
+        for operation_folder in dirs:
+            operation_path = os.path.join(root, operation_folder)
+            operation_parts = operation_folder.split('_', 1)
+            if len(operation_parts) < 2:
+                continue  # Skip folders that don't match expected pattern
+            timestamp, operation = operation_parts
+            
+            for exec_type in os.listdir(operation_path):
+                exec_path = os.path.join(operation_path, exec_type, "log")
+                if os.path.exists(exec_path):
+                    for file in os.listdir(exec_path):
+                        if file.endswith(".log"):
+                            filepath = os.path.join(exec_path, file)
+                            parsed_data = parse_log_file(filepath, timestamp, operation, exec_type)
+                            if parsed_data:
+                                data.append(parsed_data)
     
     return pd.DataFrame(data)
 
@@ -80,13 +89,13 @@ def plot_execution_time(df):
                 
                 plt.xlabel("Matrix Size")
                 plt.ylabel("Execution Time (s)")
-                plt.title(f"Execution Time vs Matrix Size ({operation} - {value_type}) - {timestamp}")
+                plt.title(f"Execution Time {timestamp}{operation}   ({value_type})")
                 plt.yscale("log")  # Apply logarithmic scale for better visibility
                 plt.legend(loc='best')
                 plt.grid()
-                plt.savefig(f"execution_time_{timestamp}_{operation}_{value_type}.png")
+                plt.savefig(f"./res/graphs/execution_time_{timestamp}_{operation}_{value_type}.png")
 
 # Exemple d'utilisation
-df_logs = process_logs("../../../res/raw")
+df_logs = process_logs("./res/raw")
 if not df_logs.empty:
     plot_execution_time(df_logs)

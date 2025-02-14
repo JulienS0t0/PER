@@ -24,6 +24,9 @@ run:
 run-save:
 	@./src/operations/scripts/run.sh $(word 2, $(MAKECMDGOALS)) save
 
+result:
+	@python3 ./src/operations/scripts/compute-res.py
+
 clean:
 	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
 	rm -rf out/operations/* out/matrices/*
