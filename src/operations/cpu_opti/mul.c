@@ -55,13 +55,14 @@ void multiplier_matrices_grandes(const void *data1, const void *data2, void *res
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        printf("Utilisation : %s <fichier_matrice1.csv> <fichier_matrice2.csv>\n", argv[0]);
+        printf("Utilisation : %s <fichier_matrice1.csv> <fichier_matrice2.csv> [chemin_stockage]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
     int taille1, taille2;
     void *data1 = NULL, *data2 = NULL;
     void *resultat = NULL;
+    const char *chemin_stockage = (argc > 3) ? argv[3] : NULL;
     
     int is_float1 = type_matrice(argv[1]);
     int is_float2 = type_matrice(argv[2]);
@@ -113,6 +114,12 @@ int main(int argc, char *argv[]) {
                                  "cpu", "multiplication", is_float1, taille1);
     sauvegarder_matrice_csv(nom_fichier_resultat, resultat, taille1, is_float1);
     */
+
+    // Sauvegarde si un chemin de stockage est fourni
+    if (chemin_stockage) {
+        sauvegarder_matrice_csv(chemin_stockage, resultat, taille1, is_float1);
+        printf("Résultat enregistré dans le fichier : %s", chemin_stockage);
+    }
     
     free(data1);
     free(data2);
