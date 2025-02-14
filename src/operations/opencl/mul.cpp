@@ -1,9 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#define CL_TARGET_OPENCL_VERSION 200
-#include <CL/cl.h>  // OpenCL C API
-#include <unistd.h>
+#include <CL/cl.h>
+#include <ctime>
 #include "../../matrices/matrix_utils.h"
 
 using namespace std;
@@ -42,46 +41,43 @@ int main(int argc, char *argv[]) {
     }
 
     int N = taille1;
-    int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
-    h_result = malloc(matrixSize);  // Allocate memory for the result matrix
+    size_t matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
+    h_result = malloc(matrixSize);
+    if (!h_result) {
+        cerr << "Erreur d'allocation mémoire sur l'hôte." << endl;
+        return EXIT_FAILURE;
+    }
 
-    // 1. Initialize OpenCL
     cl_int err;
     cl_platform_id platform;
     cl_device_id device;
     cl_context context;
     cl_command_queue queue;
     
-    // Get the first available platform
     err = clGetPlatformIDs(1, &platform, nullptr);
     if (err != CL_SUCCESS) {
         cerr << "Erreur : Impossible d'obtenir une plateforme OpenCL." << endl;
         return EXIT_FAILURE;
     }
 
-    // Get the first available GPU device
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
     if (err != CL_SUCCESS) {
         cerr << "Erreur : Aucun GPU OpenCL trouvé." << endl;
         return EXIT_FAILURE;
     }
 
-    // Create an OpenCL context
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &err);
     if (!context) {
         cerr << "Erreur : Impossible de créer le contexte OpenCL." << endl;
         return EXIT_FAILURE;
     }
 
-    // Create a command queue
-    cl_queue_properties properties[] = {0}; // Propriétés vides
-    queue = clCreateCommandQueueWithProperties(context, device, properties, &err);
+    queue = clCreateCommandQueueWithProperties(context, device, nullptr, &err);
     if (!queue) {
         cerr << "Erreur : Impossible de créer la file de commandes OpenCL." << endl;
         return EXIT_FAILURE;
     }
 
-    // 2. Load & Compile OpenCL Kernel
     string kernelSource = readKernelFile(KERNEL_FILE);
     const char *kernelSourceCStr = kernelSource.c_str();
     size_t kernelLength = kernelSource.length();
@@ -94,72 +90,54 @@ int main(int argc, char *argv[]) {
 
     err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
     if (err != CL_SUCCESS) {
-        cerr << "Erreur : Échec de la compilation du kernel OpenCL." << endl;
-        
-        // Print build log for debugging
         size_t logSize;
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &logSize);
         vector<char> buildLog(logSize);
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, logSize, buildLog.data(), nullptr);
-        cerr << "Build Log:\n" << buildLog.data() << endl;
-
+        cerr << "Erreur : Échec de la compilation du kernel OpenCL.\n" << buildLog.data() << endl;
         return EXIT_FAILURE;
     }
 
-    // Create the OpenCL kernel
     cl_kernel kernel = clCreateKernel(program, is_float ? "mul_matrices_float" : "mul_matrices_int", &err);
     if (!kernel) {
         cerr << "Erreur : Impossible de créer le kernel OpenCL." << endl;
         return EXIT_FAILURE;
     }
 
-    // 3. Allocate Buffers on Device
     cl_mem d_mat1 = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixSize, h_mat1, &err);
     cl_mem d_mat2 = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixSize, h_mat2, &err);
     cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, matrixSize, nullptr, &err);
 
-    if (!d_mat1 || !d_mat2 || !d_result) {
-        cerr << "Erreur : Échec de l'allocation de la mémoire sur le GPU." << endl;
-        return EXIT_FAILURE;
-    }
-
-    // 4. Set Kernel Arguments
-    clock_t start = clock();
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_mat1);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_mat2);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_result);
     clSetKernelArg(kernel, 3, sizeof(int), &N);
 
-    // 5. Execute Kernel
-    size_t globalWorkSize = N * N;
-    size_t localWorkSize = (globalWorkSize < 256) ? globalWorkSize : 256;
+    size_t globalWorkSize[2] = { (size_t)((N < 16) ? N : 16), 
+                             (size_t)((N < 16) ? N : 16) };
+    size_t localWorkSize[2] = { (size_t)((N < 16) ? N : 16), 
+                            (size_t)((N < 16) ? N : 16) };
 
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
+    
+    clock_t start = clock();
+    err = clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de l'exécution du kernel OpenCL." << endl;
+        return EXIT_FAILURE;
+    }
+
+    clEnqueueReadBuffer(queue, d_result, CL_TRUE, 0, matrixSize, h_result, 0, nullptr, nullptr);
     clock_t end = clock();
+    
+    printf("Multiplication terminée en %.2f ms.\n", ((double)(end - start)) / CLOCKS_PER_SEC * 1000);
 
-    if (err != CL_SUCCESS) {
-        cerr << "Erreur : Échec de l'exécution du kernel OpenCL." << endl;
-        return EXIT_FAILURE;
-    }
-
-    // 6. Read Back Result
-    err = clEnqueueReadBuffer(queue, d_result, CL_TRUE, 0, matrixSize, h_result, 0, nullptr, nullptr);
-    if (err != CL_SUCCESS) {
-        cerr << "Erreur : Échec de la lecture des résultats." << endl;
-        return EXIT_FAILURE;
-    }
-
-    // 7. Save and Cleanup
-    double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("Multiplication terminée en %.2f ms.\n", temps_execution);
-
-    // Sauvegarde si un chemin de stockage est fourni
     if (chemin_stockage) {
         sauvegarder_matrice_csv(chemin_stockage, h_result, N, is_float);
         cout << "Résultat enregistré dans le fichier : " << chemin_stockage << endl;
+        cout << "Premiers éléments du résultat : " << ((is_float) ? ((float*)h_result)[0] : ((int*)h_result)[0]) << endl;
+
     }
 
-    // Cleanup OpenCL Resources
     clReleaseMemObject(d_mat1);
     clReleaseMemObject(d_mat2);
     clReleaseMemObject(d_result);
@@ -168,7 +146,6 @@ int main(int argc, char *argv[]) {
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
 
-    free(h_result);  // Free allocated memory
-
+    free(h_result);
     return EXIT_SUCCESS;
 }
