@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
     }
 
     //clock_t start = clock();
-    double det = determinant_blocs(data, taille, is_float);
+    determinant_blocs(data, taille, is_float);
     //clock_t end = clock();
     /*
 
