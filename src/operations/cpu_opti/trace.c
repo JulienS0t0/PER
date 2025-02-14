@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     }
 
     //clock_t start = clock();
-    double trace = calculer_trace_matrice(data, taille, is_float);
+    calculer_trace_matrice(data, taille, is_float);
     //clock_t end = clock();
     /*
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
