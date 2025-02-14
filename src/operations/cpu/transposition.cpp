@@ -18,11 +18,12 @@ void transpositionMatrice(T *matrice1, T *resultat, int taille) {
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv>" << endl;
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> [unused] [chemin_stockage]" << endl;
         return EXIT_FAILURE;
     }
 
     const char *fichier1 = argv[1];
+    const char *chemin_stockage = (argc > 3) ? argv[3] : nullptr;
 
     bool is_float = type_matrice(fichier1);
 
@@ -57,15 +58,11 @@ int main(int argc, char *argv[]) {
     auto duration = duration_cast<milliseconds>(stop - start);
 
     cout << "Transposition terminée en " << duration.count() << " ms." << endl;
+    
+    if (chemin_stockage){
+        sauvegarder_matrice_csv(chemin_stockage, resultat, taille1, is_float);
+    }
 
-    // // Génération du nom de fichier
-    // char nom_fichier[256];
-    // generer_nom_fichier_resultat(nom_fichier, sizeof(nom_fichier), "res/cpu", "transposition", is_float, taille);
-    // // Sauvegarder la matrice résultante
-    // sauvegarder_matrice_csv(nom_fichier, resultat, taille, is_float);
-    // cout << "Résultat enregistré dans le fichier : " << nom_fichier << endl;
-
-    // Libération de la mémoire
     free(matrice1);
     free(resultat);
     return EXIT_SUCCESS;

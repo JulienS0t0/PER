@@ -21,11 +21,12 @@ string readKernelFile(const char *filename) {
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        cerr << "Utilisation : " << argv[0] << " <fichier_matrice.csv>" << endl;
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> [unused] [chemin_stockage]" << endl;
         return EXIT_FAILURE;
     }
 
     const char *fichier = argv[1];
+    const char *chemin_stockage = (argc > 3) ? argv[3] : nullptr;
 
     bool is_float = type_matrice(fichier);
     int taille;
@@ -80,6 +81,11 @@ int main(int argc, char *argv[]) {
 
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("Transposition terminée en %.2f ms.\n", temps_execution);
+
+    if (chemin_stockage) {
+        sauvegarder_matrice_csv(chemin_stockage, h_result, N, is_float);
+        cout << "Résultat enregistré dans le fichier : " << chemin_stockage << endl;
+    }
 
     // Nettoyage
     clReleaseMemObject(d_mat);

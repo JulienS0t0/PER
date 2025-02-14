@@ -31,8 +31,8 @@ void transpositionMatrixInt(int *mat, int *result, int N) {
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv>" << endl;
+     if (argc < 3) {
+        cerr << "Utilisation : " << argv[0] << " <fichier_matrice1.csv> [unused] [chemin_stockage]" << endl;
         return EXIT_FAILURE;
     }
 
@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     int taille;
     void *h_mat = nullptr, *h_result = nullptr;
     void *d_mat = nullptr, *d_result = nullptr;
+    const char *chemin_stockage = (argc > 3) ? argv[3] : nullptr;
 
     // Charger la matrice
     charger_matrice_csv(fichier1, &h_mat, &taille, is_float);
@@ -70,6 +71,11 @@ int main(int argc, char *argv[]) {
 
     cout << "Transposition terminée en " << duration.count() << " ms sur GPU (CUDA)." << endl;
     // cout << "Résultat de la trace : " << (is_float ? *(float*)h_result : *(int*)h_result) << endl;
+
+    if (chemin_stockage) {
+        sauvegarder_matrice_csv(chemin_stockage, h_result, taille, is_float);
+        cout << "Résultat enregistré dans le fichier : " << chemin_stockage << endl;
+    }
 
     free(h_mat);
     free(h_result);

@@ -43,14 +43,15 @@ void transposer_matrice(const void *src, void *dest, int taille, int is_float) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("Utilisation : %s <fichier_matrice.csv>\n", argv[0]);
+     if (argc < 3) {
+        printf("Utilisation : %s <fichier_matrice1.csv> [unused] [chemin_stockage]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
     int taille;
     void *data = NULL;
     void *resultat = NULL;
+    const char *chemin_stockage = (argc > 3) ? argv[3] : NULL;
     
     int is_float = type_matrice(argv[1]);
     charger_matrice_csv(argv[1], &data, &taille, is_float);
@@ -69,15 +70,17 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    //clock_t start = clock();
+    clock_t start = clock();
     transposer_matrice(data, resultat, taille, is_float);
-
-    /*
     clock_t end = clock();
     
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("Transposition terminée en %.2f ms.\n", temps_execution);
-    */
+
+    if (chemin_stockage) {
+        sauvegarder_matrice_csv(chemin_stockage, resultat, taille, is_float);
+        printf("Résultat enregistré dans le fichier : %s", chemin_stockage);
+    }
 
     free(data);
     free(resultat);
