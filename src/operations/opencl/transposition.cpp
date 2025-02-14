@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
     int N = taille;
     int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
-    void *h_result = malloc(is_float ? sizeof(float) : sizeof(int));
+    void *h_result = malloc((is_float ? sizeof(float) : sizeof(int)) * matrixSize);
 
     // 1. Initialisation OpenCL
     cl_int err;
@@ -45,10 +45,29 @@ int main(int argc, char *argv[]) {
     cl_command_queue queue;
 
     err = clGetPlatformIDs(1, &platform, nullptr);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la récupération de la plateforme OpenCL." << endl;
+        return EXIT_FAILURE;
+    }
+
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la récupération de l'appareil OpenCL." << endl;
+        return EXIT_FAILURE;
+    }
+
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &err);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la création du contexte OpenCL." << endl;
+        return EXIT_FAILURE;
+    }
+
     cl_queue_properties properties[] = {0}; // Propriétés vides
     queue = clCreateCommandQueueWithProperties(context, device, properties, &err);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la création de la file de commandes OpenCL." << endl;
+        return EXIT_FAILURE;
+    }
 
     // 2. Compilation du kernel
     string kernelSource = readKernelFile(KERNEL_FILE);
@@ -56,32 +75,75 @@ int main(int argc, char *argv[]) {
     size_t kernelLength = kernelSource.length();
 
     cl_program program = clCreateProgramWithSource(context, 1, &kernelSourceCStr, &kernelLength, &err);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la création du programme OpenCL." << endl;
+        return EXIT_FAILURE;
+    }
+
     err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        size_t logSize;
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &logSize);
+        char *log = new char[logSize];
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, logSize, log, nullptr);
+        cerr << "Erreur lors de la compilation du kernel : " << endl << log << endl;
+        delete[] log;
+        return EXIT_FAILURE;
+    }
 
     cl_kernel kernel = clCreateKernel(program, is_float ? "transpositionMatrixFloat" : "transpositionMatrixInt", &err);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la création du kernel." << endl;
+        return EXIT_FAILURE;
+    }
 
     // 3. Allocation mémoire sur le GPU
     cl_mem d_mat = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, matrixSize, h_mat, &err);
-    cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, is_float ? sizeof(float) : sizeof(int), nullptr, &err);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de l'allocation de mémoire pour la matrice d'entrée." << endl;
+        return EXIT_FAILURE;
+    }
+
+    cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, (is_float ? sizeof(float) : sizeof(int))*matrixSize, nullptr, &err);
+    // cl_mem d_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, matrixSize, nullptr, &err);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de l'allocation de mémoire pour la matrice résultat." << endl;
+        return EXIT_FAILURE;
+    }
 
     // 4. Passage des arguments
-    clock_t start = clock();
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_mat);
-    clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_result);
-    clSetKernelArg(kernel, 2, sizeof(int), &N);
+    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_mat);
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_result);
+    err |= clSetKernelArg(kernel, 2, sizeof(int), &N);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors du passage des arguments au kernel." << endl;
+        return EXIT_FAILURE;
+    }
 
-    // 5. Exécution du kernel
-    size_t globalWorkSize = N;
-    size_t localWorkSize = (globalWorkSize < 256) ? globalWorkSize : 256;
+    // 5. Ajustement dynamique des tailles de travail
+    size_t globalWorkSize[2] = {static_cast<size_t>(N), static_cast<size_t>(N)};
+    size_t localWorkSize[2] = {16, 16};
 
-    err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
-    clock_t end = clock();
+    // Ajuste les tailles des groupes de travail si la matrice est plus petite que 16x16
+    if (N < 16) {
+        localWorkSize[0] = N;
+        localWorkSize[1] = N;
+    }
 
-    err = clEnqueueReadBuffer(queue, d_result, CL_TRUE, 0, is_float ? sizeof(float) : sizeof(int), h_result, 0, nullptr, nullptr);
+    err = clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de l'exécution du kernel." << endl;
+        return EXIT_FAILURE;
+    }
 
-    double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("Transposition terminée en %.2f ms.\n", temps_execution);
+    // Lecture du résultat
+    err = clEnqueueReadBuffer(queue, d_result, CL_TRUE, 0, (is_float ? sizeof(float) : sizeof(int)) * matrixSize, h_result, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        cerr << "Erreur lors de la lecture du buffer." << endl;
+        return EXIT_FAILURE;
+    }
 
+    // 6. Sauvegarde du résultat
     if (chemin_stockage) {
         sauvegarder_matrice_csv(chemin_stockage, h_result, N, is_float);
         cout << "Résultat enregistré dans le fichier : " << chemin_stockage << endl;
