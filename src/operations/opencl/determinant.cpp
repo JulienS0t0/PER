@@ -81,6 +81,12 @@ int main(int argc, char *argv[]) {
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("Déterminant terminé en %.2f ms.\n", temps_execution);
 
+    if (is_float) {
+    printf("Déterminant : %.6f\n", *(float*)h_result);
+    } else {
+        printf("Déterminant : %d\n", *(int*)h_result);
+    }
+
     // Nettoyage
     clReleaseMemObject(d_mat);
     clReleaseMemObject(d_result);

@@ -4,109 +4,93 @@
 #include <math.h>
 
 typedef enum { TYPE_INT, TYPE_FLOAT } TypeMatrice;
-#define BLOCK_SIZE 512  // Taille d'un bloc pour travailler efficacement en mémoire
+#define BLOCK_SIZE 512  // Taille d'un bloc pour une meilleure gestion mémoire
 
+// Structure pour gérer une matrice
 typedef struct {
     int taille;
     TypeMatrice type;
-    union {
-        int elements_int[BLOCK_SIZE][BLOCK_SIZE];
-        float elements_float[BLOCK_SIZE][BLOCK_SIZE];
-    };
+    void *elements;
 } MatriceBlock;
 
 double determinant_blocs(void *matrice, int taille, int is_float) {
-    int swap_count = 0;  // Compteur de permutations de lignes (affecte le signe du déterminant)
+    int swap_count = 0;  // Compteur de permutations de lignes
     double det = 1.0;
 
     if (is_float) {
-        float (*m)[taille] = (float (*)[taille])matrice;
+        float (*m)[taille] = (float (*)[taille]) matrice;
 
-        for (int i = 0; i < taille; i += BLOCK_SIZE) {
-            for (int j = i; j < taille; j++) {
-                // Sélection du pivot
-                int pivot_index = j;
-                for (int k = j + 1; k < taille; k++) {
-                    if (fabs(m[k][j]) > fabs(m[pivot_index][j])) {
-                        pivot_index = k;
-                    }
+        for (int j = 0; j < taille; j++) {
+            int pivot_index = j;
+            for (int k = j + 1; k < taille; k++) {
+                if (fabs(m[k][j]) > fabs(m[pivot_index][j])) {
+                    pivot_index = k;
                 }
+            }
 
-                // Échange de lignes si nécessaire
-                if (pivot_index != j) {
-                    for (int k = 0; k < taille; k++) {
-                        float temp = m[j][k];
-                        m[j][k] = m[pivot_index][k];
-                        m[pivot_index][k] = temp;
-                    }
-                    swap_count++;
+            if (m[pivot_index][j] == 0.0) {
+                return 0.0;
+            }
+
+            if (pivot_index != j) {
+                for (int k = 0; k < taille; k++) {
+                    float temp = m[j][k];
+                    m[j][k] = m[pivot_index][k];
+                    m[pivot_index][k] = temp;
                 }
+                swap_count++;
+            }
 
-                // Vérifier si la matrice est singulière
-                if (m[j][j] == 0.0) {
-                    return 0.0;
-                }
-
-                // Élimination de Gauss en bloc
-                for (int k = j + 1; k < taille && k < j + BLOCK_SIZE; k++) {
-                    float coef = m[k][j] / m[j][j];
-                    for (int l = j; l < taille; l++) {
-                        m[k][l] -= coef * m[j][l];
-                    }
+            for (int k = j + 1; k < taille; k++) {
+                float coef = m[k][j] / m[j][j];
+                for (int l = j; l < taille; l++) {
+                    m[k][l] -= coef * m[j][l];
                 }
             }
         }
 
-        // Produit des éléments diagonaux
         for (int i = 0; i < taille; i++) {
             det *= m[i][i];
         }
     } else {
-        int (*m)[taille] = (int (*)[taille])matrice;
+        int (*m)[taille] = (int (*)[taille]) matrice;
 
-        for (int i = 0; i < taille; i += BLOCK_SIZE) {
-            for (int j = i; j < taille; j++) {
-                // Sélection du pivot
-                int pivot_index = j;
-                for (int k = j + 1; k < taille; k++) {
-                    if (abs(m[k][j]) > abs(m[pivot_index][j])) {
-                        pivot_index = k;
-                    }
+        for (int j = 0; j < taille; j++) {
+            int pivot_index = j;
+            for (int k = j + 1; k < taille; k++) {
+                if (abs(m[k][j]) > abs(m[pivot_index][j])) {
+                    pivot_index = k;
                 }
+            }
 
-                // Échange de lignes si nécessaire
-                if (pivot_index != j) {
-                    for (int k = 0; k < taille; k++) {
-                        int temp = m[j][k];
-                        m[j][k] = m[pivot_index][k];
-                        m[pivot_index][k] = temp;
-                    }
-                    swap_count++;
+            if (m[pivot_index][j] == 0) {
+                return 0;
+            }
+
+            if (pivot_index != j) {
+                for (int k = 0; k < taille; k++) {
+                    int temp = m[j][k];
+                    m[j][k] = m[pivot_index][k];
+                    m[pivot_index][k] = temp;
                 }
+                swap_count++;
+            }
 
-                // Vérifier si la matrice est singulière
-                if (m[j][j] == 0) {
-                    return 0;
-                }
-
-                // Élimination de Gauss en bloc
-                for (int k = j + 1; k < taille && k < j + BLOCK_SIZE; k++) {
-                    int coef = m[k][j] / m[j][j];
-                    for (int l = j; l < taille; l++) {
-                        m[k][l] -= coef * m[j][l];
-                    }
+            for (int k = j + 1; k < taille; k++) {
+                if (m[j][j] == 0) continue;  // Éviter la division par zéro
+                int coef = m[k][j] / m[j][j];
+                for (int l = j; l < taille; l++) {
+                    m[k][l] -= coef * m[j][l];
                 }
             }
         }
 
-        // Produit des éléments diagonaux
-        det = 1;
         for (int i = 0; i < taille; i++) {
             det *= m[i][i];
         }
     }
 
-    return (swap_count % 2 == 0) ? det : -det;  // Inversion du signe selon les permutations
+    return (swap_count % 2 == 0) ? det : -det;
 }
 
 int main(int argc, char *argv[]) {
@@ -135,15 +119,8 @@ int main(int argc, char *argv[]) {
         printf("Erreur : Taille de matrice trop grande (max %d)\n", MAX_N);
         return EXIT_FAILURE;
     }
-
-    //clock_t start = clock();
-    determinant_blocs(data, taille, is_float);
-    //clock_t end = clock();
-    /*
-
-    double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("Déterminant calculé en %.2f ms.\n", temps_execution);
-    printf("Déterminant : %.6f\n", det);*/
+    double res = determinant_blocs(data, taille, is_float);
+    printf("Déterminant : %.6f\n", res);
 
     return EXIT_SUCCESS;
 }

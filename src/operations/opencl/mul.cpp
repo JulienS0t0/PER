@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#define CL_TARGET_OPENCL_VERSION 200
 #include <CL/cl.h>
 #include <ctime>
 #include "../../matrices/matrix_utils.h"

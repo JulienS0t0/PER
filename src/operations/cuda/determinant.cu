@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     auto duration = duration_cast<milliseconds>(stop - start);
 
     cout << "Determinant terminé en " << duration.count() << " ms sur GPU (CUDA)." << endl;
-    // cout << "Résultat de la trace : " << (is_float ? *(float*)h_result : *(int*)h_result) << endl;
+    cout << "Résultat de la trace : " << (is_float ? *(float*)h_result : *(int*)h_result) << endl;
 
     free(h_mat);
     free(h_result);

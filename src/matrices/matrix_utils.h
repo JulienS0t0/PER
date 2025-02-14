@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#define MAX_N 512 // 8192// 16384 // 32768 // Taille maximale de la matrice carrée
+#define MAX_N 2048 // 8192// 16384 // 32768 // Taille maximale de la matrice carrée
 #define MIN_VAL -100
 #define MAX_VAL 100
 

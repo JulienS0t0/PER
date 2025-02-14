@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     // Charger la matrice
     charger_matrice_csv(fichier1, &h_mat, &taille, is_float);
 
-    h_result = malloc(is_float ? sizeof(float) : sizeof(int));
+    h_result = malloc( taille * taille * (is_float ? sizeof(float) : sizeof(int)));
     if (!h_result) {
         cerr << "Erreur d'allocation mémoire" << endl;
         free(h_mat);
@@ -55,17 +55,19 @@ int main(int argc, char *argv[]) {
 
     auto start = high_resolution_clock::now();
     cudaMalloc(&d_mat, taille * taille * (is_float ? sizeof(float) : sizeof(int)));
-    cudaMalloc(&d_result, is_float ? sizeof(float) : sizeof(int));
+    cudaMalloc(&d_result, taille * taille * (is_float ? sizeof(float) : sizeof(int)));
     cudaMemcpy(d_mat, h_mat, taille * taille * (is_float ? sizeof(float) : sizeof(int)), cudaMemcpyHostToDevice);
 
-    int blockSize = 256;
+    dim3 threadsPerBlock(16, 16);
+    dim3 numBlocks((taille + 15) / 16, (taille + 15) / 16);
+
     if (is_float) {
-        transpositionMatrixFloat<<<1, blockSize>>>((float*)d_mat, (float*)d_result, taille);
+        transpositionMatrixFloat<<<numBlocks, threadsPerBlock>>>((float*)d_mat, (float*)d_result, taille);
     } else {
-        transpositionMatrixInt<<<1, blockSize>>>((int*)d_mat, (int*)d_result, taille);
+        transpositionMatrixInt<<<numBlocks, threadsPerBlock>>>((int*)d_mat, (int*)d_result, taille);
     }
     cudaDeviceSynchronize();
-    cudaMemcpy(h_result, d_result, is_float ? sizeof(float) : sizeof(int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_result, d_result, taille * taille * (is_float ? sizeof(float) : sizeof(int)), cudaMemcpyDeviceToHost);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start);
 
