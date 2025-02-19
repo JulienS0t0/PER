@@ -72,9 +72,17 @@ def plot_execution_time(df):
     df["Matrix Size"] = df["Matrix Size"].apply(lambda x: int(x.split('x')[0]))
     df.sort_values(by="Matrix Size", inplace=True)
     
-    # Créer le dossier si il n'existe pas déjà
     os.makedirs('./res/graphs', exist_ok=True)
-
+    
+    # Définition d'une palette cohérente pour chaque type d'exécution
+    exec_styles = {
+        "cuda": ("#E69F00", "o"),
+        "opencl": ("#56B4E9", "s"),
+        "cpu_opti_O3": ("#009E73", "D"),
+        "cpu_opti_O2": ("#F0E442", "^"),
+        "cpu": ("#0072B2", "v")
+    }
+    
     for timestamp in df["Timestamp"].unique():
         subset_timestamp = df[df["Timestamp"] == timestamp]
         for operation in subset_timestamp["Operation"].unique():
@@ -86,13 +94,29 @@ def plot_execution_time(df):
                     continue
                 
                 plt.figure(figsize=(12, 6))
+                
                 for exec_type in subset["Execution Type"].unique():
+                    if exec_type in exec_styles:
+                        color, marker = exec_styles[exec_type]
+                    else:
+                        color, marker = "#D55E00", "*"  # Valeur par défaut
+                    
                     exec_subset = subset[subset["Execution Type"] == exec_type]
-                    plt.plot(exec_subset["Matrix Size"], exec_subset["Execution Time (s)"], marker='o', linestyle='-', markersize=5, alpha=0.7, label=exec_type)
+                    plt.plot(
+                        exec_subset["Matrix Size"], 
+                        exec_subset["Execution Time (s)"], 
+                        marker=marker, 
+                        linestyle='-', 
+                        markersize=7, 
+                        alpha=0.8, 
+                        linewidth=2, 
+                        color=color, 
+                        label=exec_type
+                    )
                 
                 plt.xlabel("Matrix Size")
                 plt.ylabel("Execution Time (s)")
-                plt.title(f"Execution Time {timestamp}{operation}   ({value_type})")
+                plt.title(f"Execution Time {timestamp} {operation} ({value_type})")
                 plt.yscale("log")  # Apply logarithmic scale for better visibility
                 plt.legend(loc='best')
                 plt.grid()
