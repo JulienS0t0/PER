@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    clock_t start = clock();
     cl_int err;
     cl_platform_id platform;
     cl_device_id device;
@@ -120,7 +121,6 @@ int main(int argc, char *argv[]) {
                             (size_t)((N < 16) ? N : 16) };
 
     
-    clock_t start = clock();
     err = clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     if (err != CL_SUCCESS) {
         cerr << "Erreur lors de l'exécution du kernel OpenCL." << endl;

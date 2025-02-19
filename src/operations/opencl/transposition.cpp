@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
     void *h_result = malloc((is_float ? sizeof(float) : sizeof(int)) * matrixSize);
 
     // 1. Initialisation OpenCL
+    clock_t start = clock();
     cl_int err;
     cl_platform_id platform;
     cl_device_id device;
@@ -142,6 +143,10 @@ int main(int argc, char *argv[]) {
         cerr << "Erreur lors de la lecture du buffer." << endl;
         return EXIT_FAILURE;
     }
+
+    clock_t end = clock();
+    double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("Transposition terminée en %.2f ms.\n", temps_execution);
 
     // 6. Sauvegarde du résultat
     if (chemin_stockage) {

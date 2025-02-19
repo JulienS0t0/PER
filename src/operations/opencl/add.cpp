@@ -45,6 +45,8 @@ int main(int argc, char *argv[]) {
     int matrixSize = N * N * (is_float ? sizeof(float) : sizeof(int));
     h_result = malloc(matrixSize);  // Allocate memory for the result matrix
 
+    clock_t start = clock();
+
     // 1. Initialize OpenCL
     cl_int err;
     cl_platform_id platform;
@@ -124,7 +126,6 @@ int main(int argc, char *argv[]) {
     }
 
     // 4. Set Kernel Arguments
-    clock_t start = clock();
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_mat1);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_mat2);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_result);
@@ -135,7 +136,6 @@ int main(int argc, char *argv[]) {
     size_t localWorkSize = (globalWorkSize < 256) ? globalWorkSize : 256;
 
     err = clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &globalWorkSize, &localWorkSize, 0, nullptr, nullptr);
-    clock_t end = clock();
 
     if (err != CL_SUCCESS) {
         cerr << "Erreur : Échec de l'exécution du kernel OpenCL." << endl;
@@ -148,6 +148,8 @@ int main(int argc, char *argv[]) {
         cerr << "Erreur : Échec de la lecture des résultats." << endl;
         return EXIT_FAILURE;
     }
+
+    clock_t end = clock();
 
     // 7. Save and Cleanup
     double temps_execution = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;

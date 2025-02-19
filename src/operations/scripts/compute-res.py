@@ -74,13 +74,13 @@ def plot_execution_time(df):
     
     os.makedirs('./res/graphs', exist_ok=True)
     
-    # Définition d'une palette cohérente pour chaque type d'exécution
+    # Palette optimisée pour daltoniens avec forte distinction des couleurs
     exec_styles = {
-        "cuda": ("#E69F00", "o"),
-        "opencl": ("#56B4E9", "s"),
-        "cpu_opti_O3": ("#009E73", "D"),
-        "cpu_opti_O2": ("#F0E442", "^"),
-        "cpu": ("#0072B2", "v")
+        "cuda": ("#E6194B", "o"),  # Rouge foncé
+        "opencl": ("#3CB44B", "s"),  # Vert standard
+        "cpu_opti_O3": ("#FF8000", "D"),  # Orange vif
+        "cpu_opti_O2": ("#4363D8", "^"),  # Bleu intense
+        "cpu": ("#800080", "v")  # Violet foncé
     }
     
     for timestamp in df["Timestamp"].unique():
@@ -99,7 +99,7 @@ def plot_execution_time(df):
                     if exec_type in exec_styles:
                         color, marker = exec_styles[exec_type]
                     else:
-                        color, marker = "#D55E00", "*"  # Valeur par défaut
+                        color, marker = "#911eb4", "*"  # Violet par défaut
                     
                     exec_subset = subset[subset["Execution Type"] == exec_type]
                     plt.plot(
@@ -107,9 +107,9 @@ def plot_execution_time(df):
                         exec_subset["Execution Time (s)"], 
                         marker=marker, 
                         linestyle='-', 
-                        markersize=7, 
-                        alpha=0.8, 
-                        linewidth=2, 
+                        markersize=8,  # Augmentation de la taille des points
+                        alpha=0.9, 
+                        linewidth=3,  # Épaississement des lignes
                         color=color, 
                         label=exec_type
                     )
