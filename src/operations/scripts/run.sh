@@ -56,10 +56,17 @@ for TYPE in $(ls "$MATRIX_DIR"); do
         for IMPL in cpu cpu_opti_O2 cpu_opti_O3 cuda opencl; do
             EXECUTABLE="$OPERATIONS_DIR/$IMPL/$OPERATION"
             RESULT_DIR=""
+            NSYS_LOG_FILE=""
 
             case "$IMPL" in
-                cuda) RESULT_DIR="$CUDA_RESULTS_DIR" ;;
-                opencl) RESULT_DIR="$OPENCL_RESULTS_DIR" ;;
+                cuda) 
+                    RESULT_DIR="$CUDA_RESULTS_DIR" 
+                    NSYS_LOG_FILE="${RESULT_DIR}/log/${MATRIX_SIZE}_${TYPE}_nsys.qdrep"
+                    ;;
+                opencl) 
+                    RESULT_DIR="$OPENCL_RESULTS_DIR" 
+                    NSYS_LOG_FILE="${RESULT_DIR}/log/${MATRIX_SIZE}_${TYPE}_nsys.qdrep"
+                    ;;
                 cpu_opti_O2) RESULT_DIR="$CPU_OPTI_O2_RESULTS_DIR" ;;
                 cpu_opti_O3) RESULT_DIR="$CPU_OPTI_O3_RESULTS_DIR" ;;
                 cpu) RESULT_DIR="$CPU_RESULTS_DIR" ;;
@@ -75,10 +82,15 @@ for TYPE in $(ls "$MATRIX_DIR"); do
 
             if [ -x "$EXECUTABLE" ]; then
                 echo "Running $EXECUTABLE with $FILE1 and $FILE2"
-                $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" $SAVE_ARG &> "$LOG_FILE"
+                if [[ "$IMPL" == "cuda" || "$IMPL" == "opencl" ]]; then
+                    nsys profile -o "$NSYS_LOG_FILE" $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" $SAVE_ARG &> "$LOG_FILE"
+                else
+                    $TIME_CMD -v "$EXECUTABLE" "$FILE1" "$FILE2" $SAVE_ARG &> "$LOG_FILE"
+                fi
             else
                 echo "Executable not found: $EXECUTABLE"
             fi
         done
     done
 done
+
